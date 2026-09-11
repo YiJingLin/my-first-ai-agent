@@ -11,7 +11,7 @@ Policy harness / live gate: see `../2_harness/`.
 ## Prerequisites
 
 - Parent `.env` with `OPENAI_API_KEY`
-- `pip install -r requirements.txt`
+- Python 3.13 + venv (see Run Python Script below)
 - Download `linkedin.pdf` from your LinkedIn profile page (optional)
 - Edit `summary.txt` about yourself
 
@@ -30,21 +30,25 @@ Policy harness / live gate: see `../2_harness/`.
   requirements.txt        # Python dependencies for this lab
 ```
 
-## How to run
+### Lab in Jupyter Notebook
 
-From the repo root (or this folder):
+`profile_chatbot.ipynb` — same agent flow as the scripts, step by step.
+
+
+## Run Python Script
+
+From this folder, use a virtual environment (required on Homebrew Python):
 
 ```bash
 cd 1_profile_chatbot
+python3.13 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 python profile_chatbot.py
 ```
 
-If `python` is not found, use `python3 profile_chatbot.py` instead. Gradio should open in the browser (local URL is printed in the terminal).
+If Gradio fails with a NumPy/`_multiarray_umath` error, run `unset PYTHONPATH` first — a global Homebrew `PYTHONPATH` in `~/.zshrc` can override the venv.
 
-### Lab in Jupyter Notebook
-
-`profile_chatbot.ipynb` — same agent flow as the scripts, step by step.
 
 ### Deployment
 
