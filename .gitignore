@@ -1,2 +1,5 @@
 .env
-*/linkedin.pdf
+*.pdf
+__pycache__/
+**/__pycache__/
+*.py[cod]
