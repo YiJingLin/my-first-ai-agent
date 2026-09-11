@@ -30,18 +30,21 @@ Policy harness / live gate: see `../2_harness/`.
   requirements.txt        # Python dependencies for this lab
 ```
 
-### Lab in Jupyter Notebook
+## How to run
 
-`profile_chatbot.ipynb` — same agent flow as the scripts, step by step.
-
-### Run Python Script
-
-From this folder:
+From the repo root (or this folder):
 
 ```bash
 cd 1_profile_chatbot
+pip install -r requirements.txt
 python profile_chatbot.py
 ```
+
+If `python` is not found, use `python3 profile_chatbot.py` instead. Gradio should open in the browser (local URL is printed in the terminal).
+
+### Lab in Jupyter Notebook
+
+`profile_chatbot.ipynb` — same agent flow as the scripts, step by step.
 
 ### Deployment
 
