@@ -1,5 +1,5 @@
 ---
-title: Profile Chatbot
+title: profile_chatbot
 emoji: 💬
 colorFrom: blue
 colorTo: gray
