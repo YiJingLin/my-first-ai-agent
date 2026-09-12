@@ -118,21 +118,3 @@ Course-equivalent with `uv` (optional): from `space/`, `uv run gradio deploy`.
 4. **Restart** the Space, then open the **App** tab and chat
 
 Never commit `.env` or put API keys in `space/`.
-
-### 5. Redeploy after code or profile changes
-
-```bash
-cd 1_profile_chatbot
-./sync_space.sh
-source .venv/bin/activate
-cd space && gradio deploy
-```
-
-### Verify checklist
-
-- [ ] `./sync_space.sh` lists `agent/`, `app.py`, `requirements.txt`, `summary.txt` under `space/`
-- [ ] `hf auth whoami` shows your username
-- [ ] `gradio deploy` finishes with a `https://huggingface.co/spaces/...` URL
-- [ ] Space secret `OPENAI_API_KEY` is set; Space restarted
-- [ ] App loads; a simple question returns an answer (not an API-key error)
-- [ ] (If you use tools) recording email / company still works in Space logs
