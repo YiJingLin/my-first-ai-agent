@@ -6,20 +6,68 @@ Career twin with offline evaluation probes and a live policy gate (refuse unrela
 
 - Parent `.env` with `OPENAI_API_KEY`
 - `summary.txt` (and optional `linkedin.pdf`) in this folder
-- `pip install -r requirements.txt`
+- Python 3.13 + venv (see below)
 
 ## Project structure
 
 ```
 2_harness/
-  harness.ipynb      # twin + harness + gated Gradio
-  summary.txt        # short bio fed into the system prompt
-  linkedin.pdf       # optional LinkedIn PDF for extra context
+  harness_app.ipynb  # lab walkthrough (notebook + offline harness)
+  harness_app.py     # Gradio entrypoint (gated chat)
+  agent/
+    __init__.py
+    context.py       # loads summary/LinkedIn and builds the system prompt
+    tools.py         # tool functions, JSON schemas, and tool-call handler
+    runtime.py       # raw twin OpenAI chat loop
+    policy.py        # classify / judge / gated chat
+    harness.py       # curated cases + run_harness()
+  summary.txt
+  linkedin.pdf       # optional; gitignored
   requirements.txt
 ```
 
-## What to run
+### Lab in Jupyter Notebook
 
-1. Offline: run cells through `run_harness()` to score the raw twin
-2. Optional: `run_harness(reply_fn=chat)` to score the gated path
-3. Gradio: last cell launches chat with input/output gates
+`harness_app.ipynb` — same flow as the scripts, step by step (includes offline `run_harness()` probes).
+
+## Run Python Script
+
+From this folder, use a virtual environment (required on Homebrew Python):
+
+```bash
+cd 2_harness
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python harness_app.py
+```
+
+This launches Gradio with the live input/output policy gate.
+
+If Gradio fails with a NumPy/`_multiarray_umath` error, run `unset PYTHONPATH` first — a global Homebrew `PYTHONPATH` in `~/.zshrc` can override the venv.
+
+### Flow (`harness_app.py`)
+
+```mermaid
+flowchart TD
+  A[harness_app.py] --> B[load_env]
+  A --> C[build_gated_chat]
+  C --> D[Gradio ChatInterface]
+
+  D --> E[User message]
+  E --> F[classify_user_message<br/>policy.py]
+  F -->|not on_topic| G[Return REFUSAL]
+  F -->|on_topic| H[generate_reply<br/>runtime.py]
+
+  H --> I[OpenAI + tools<br/>tools.py]
+  I --> J[System prompt<br/>context.py]
+  J --> K[Model reply]
+
+  K --> L[judge_reply<br/>policy.py]
+  L -->|pass| M[Return reply to Gradio]
+  L -->|fail| N[Return output-blocked message]
+```
+
+## Deployment
+
+This project does not cover deployment. If you want to deploy a Gradio twin (Hugging Face Spaces or Render), follow the steps in [`../1_profile_chatbot/`](../1_profile_chatbot/).
