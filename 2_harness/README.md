@@ -26,7 +26,7 @@ Career twin with offline evaluation probes and a live policy gate (refuse unrela
   requirements.txt
 ```
 
-### Lab in Jupyter Notebook
+## Lab in Jupyter Notebook
 
 `harness_app.ipynb` — same flow as the scripts, step by step (includes offline `run_harness()` probes).
 
@@ -50,22 +50,18 @@ If Gradio fails with a NumPy/`_multiarray_umath` error, run `unset PYTHONPATH` f
 
 ```mermaid
 flowchart TD
-  A[harness_app.py] --> B[load_env]
-  A --> C[build_gated_chat]
-  C --> D[Gradio ChatInterface]
+  A[harness_app.py: load_env → build_gated_chat → Gradio] --> B[User message]
+  B --> C[classify_user_message — policy.py]
+  C --> D["log: [gate] input category=…"]
+  D --> E{on_topic?}
 
-  D --> E[User message]
-  E --> F[classify_user_message<br/>policy.py]
-  F -->|not on_topic| G[Return REFUSAL]
-  F -->|on_topic| H[generate_reply<br/>runtime.py]
+  E -->|no| F[Return REFUSAL]
+  E -->|yes| G[generate_reply — runtime.py<br/>tools + context system prompt]
+  G --> H[judge_reply — policy.py]
+  H --> I{pass?}
 
-  H --> I[OpenAI + tools<br/>tools.py]
-  I --> J[System prompt<br/>context.py]
-  J --> K[Model reply]
-
-  K --> L[judge_reply<br/>policy.py]
-  L -->|pass| M[Return reply to Gradio]
-  L -->|fail| N[Return output-blocked message]
+  I -->|yes| J[Return reply to Gradio]
+  I -->|no| K["log: [gate] output blocked → return blocked message"]
 ```
 
 ## Deployment
