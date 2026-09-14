@@ -28,6 +28,8 @@ Policy harness / live gate: see `../2_harness/`.
     context.py            # loads summary/LinkedIn and builds the system prompt
     tools.py              # tool functions, JSON schemas, and tool-call handler
     runtime.py            # shared OpenAI chat loop (local + Space)
+  tests/                  # unit tests for agent/ (mocked OpenAI — no API key)
+  pytest.ini              # pythonpath + testpaths for local/CI pytest
   summary.txt
   linkedin.pdf            # optional; gitignored
   requirements.txt
@@ -54,6 +56,25 @@ python profile_chatbot.py
 ```
 
 If Gradio fails with a NumPy/`_multiarray_umath` error, run `unset PYTHONPATH` first — a global Homebrew `PYTHONPATH` in `~/.zshrc` can override the venv.
+
+## Unit tests
+
+Agent unit tests live under `tests/`. They mock the OpenAI client — no `OPENAI_API_KEY` required. The same suite runs on PRs via GitHub Actions.
+
+```bash
+cd 1_profile_chatbot
+source .venv/bin/activate
+unset PYTHONPATH   # if a global PYTHONPATH interferes
+pip install -r requirements.txt   # includes pytest
+python -m pytest tests/ -v
+```
+
+Useful variants:
+
+```bash
+python -m pytest tests/test_tools.py          # one file
+python -m pytest tests/test_runtime.py::test_chat_runs_tool_loop_then_answers
+```
 
 ## Deployment (Hugging Face Spaces)
 
