@@ -2,3 +2,4 @@ gradio
 pypdf
 openai
 python-dotenv
+pytest
