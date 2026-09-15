@@ -21,6 +21,8 @@ Career twin with offline evaluation probes and a live policy gate (refuse unrela
     runtime.py       # raw twin OpenAI chat loop
     policy.py        # classify / judge / gated chat
     harness.py       # curated cases + run_harness()
+  tests/             # unit tests for agent/ (mocked OpenAI — no API key)
+  pytest.ini         # pythonpath + testpaths for local/CI pytest
   summary.txt
   linkedin.pdf       # optional; gitignored
   requirements.txt
@@ -62,6 +64,25 @@ flowchart TD
 
   I -->|yes| J[Return reply to Gradio]
   I -->|no| K["log: [gate] output blocked → return blocked message"]
+```
+
+## Unit tests
+
+Agent unit tests live under `tests/` (context, tools, runtime, policy, harness). They mock the OpenAI client — no `OPENAI_API_KEY` required. The same suite runs on PRs via GitHub Actions (`unit-tests.yml` matrix).
+
+```bash
+cd 2_harness
+source .venv/bin/activate
+unset PYTHONPATH   # if a global PYTHONPATH interferes
+pip install -r requirements.txt   # includes pytest
+python -m pytest tests/ -v
+```
+
+Useful variants:
+
+```bash
+python -m pytest tests/test_policy.py          # one file
+python -m pytest tests/test_harness.py::test_run_harness_aggregates_mocked_verdicts
 ```
 
 ## Deployment
