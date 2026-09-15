@@ -21,6 +21,8 @@ Career twin with offline evaluation probes and a live policy gate (refuse unrela
     runtime.py       # raw twin OpenAI chat loop
     policy.py        # classify / judge / gated chat
     harness.py       # curated cases + run_harness()
+  tests/             # unit tests for agent/ (mocked OpenAI — no API key)
+  pytest.ini         # pythonpath + testpaths for local/CI pytest
   summary.txt
   linkedin.pdf       # optional; gitignored
   requirements.txt
