@@ -68,7 +68,7 @@ flowchart TD
 
 ## Unit tests
 
-Agent unit tests live under `tests/` (context, tools, runtime, policy, harness). They mock the OpenAI client — no `OPENAI_API_KEY` required.
+Agent unit tests live under `tests/` (context, tools, runtime, policy, harness). They mock the OpenAI client — no `OPENAI_API_KEY` required. The same suite runs on PRs via GitHub Actions (`unit-tests.yml` matrix).
 
 ```bash
 cd 2_harness
