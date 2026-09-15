@@ -66,6 +66,25 @@ flowchart TD
   I -->|no| K["log: [gate] output blocked → return blocked message"]
 ```
 
+## Unit tests
+
+Agent unit tests live under `tests/` (context, tools, runtime, policy, harness). They mock the OpenAI client — no `OPENAI_API_KEY` required.
+
+```bash
+cd 2_harness
+source .venv/bin/activate
+unset PYTHONPATH   # if a global PYTHONPATH interferes
+pip install -r requirements.txt   # includes pytest
+python -m pytest tests/ -v
+```
+
+Useful variants:
+
+```bash
+python -m pytest tests/test_policy.py          # one file
+python -m pytest tests/test_harness.py::test_run_harness_aggregates_mocked_verdicts
+```
+
 ## Deployment
 
 This project does not cover deployment. If you want to deploy a Gradio twin (Hugging Face Spaces or Render), follow the steps in [`../1_profile_chatbot/`](../1_profile_chatbot/).
