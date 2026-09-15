@@ -1,4 +1,9 @@
 # PR check: unit tests for 1_profile_chatbot/agent (mocked OpenAI — no API key).
+#
+# Scale-up note (~5+ labs with tests/):
+# Prefer an explicit matrix over one mega-job. Once labs grow further, consider
+# path filters / change detection so PRs only run pytest for projects that
+# changed (full suite on main). See TODO.md → PR checks.
 name: Profile chatbot tests
 
 on:
