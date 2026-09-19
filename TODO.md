@@ -15,6 +15,6 @@ Once finished, tag on finish date `[yyyy-mm-dd]` in front of the item.
 
 ## Design / next lab
 
-- [ ] Setup new project for `agents/2_openai/1_lab1.ipynb` contents (scaffold folder, agent package, entrypoint, README — similar to `1_profile_chatbot` / `2_harness`), showing trace on OpenAI dashboard
+- [x] [2026-09-19] Setup new project for `agents/2_openai/1_lab1.ipynb` contents — landed as `3_openai_agent/` (notebook walkthrough + README; package/entrypoint can follow later)
 - [ ] Multiple agents run parallel runs using async
 - [ ] Agent orchestrating via code / LLM - either orchestrate via code or LLM. moreover, LLM provude agents as tool or handoff.
