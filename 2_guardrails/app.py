@@ -1,4 +1,4 @@
-"""Harness entrypoint: Gradio chat with live policy gate."""
+"""Gradio entrypoint: career twin with live policy gate."""
 
 from __future__ import annotations
 

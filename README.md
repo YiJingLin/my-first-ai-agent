@@ -5,5 +5,5 @@ This is the practice on AI agents course from Udemy
 
 ## Labs
 - `1_profile_chatbot/` — OpenAI + tools + Gradio profile/career twin
-- `2_harness/` — prompt harness + live policy gate on top of lab 1
+- `2_guardrails/` — live policy gate (guardrails) on top of lab 1’s career twin
 - `3_openai_agent/` — OpenAI Agents SDK walkthrough (traces, tools, sessions, orchestration, models, structured outputs, guardrails)

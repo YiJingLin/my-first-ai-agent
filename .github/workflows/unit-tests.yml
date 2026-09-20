@@ -24,7 +24,7 @@ jobs:
       matrix:
         project:
           - 1_profile_chatbot
-          - 2_harness
+          - 2_guardrails
     defaults:
       run:
         working-directory: ${{ matrix.project }}
