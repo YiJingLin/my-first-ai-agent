@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pypdf import PdfReader
 
-# Data files live in 2_harness/ (parent of this package)
+# Data files live in 2_guardrails/ (parent of this package)
 DATA_DIR = Path(__file__).resolve().parent.parent
 
 

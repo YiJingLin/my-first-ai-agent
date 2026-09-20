@@ -1,11 +1,11 @@
-"""Unit tests for agent.harness — curated cases + offline run (mocked judge)."""
+"""Unit tests for agent.probes — curated cases + offline run (mocked judge)."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from agent.harness import CASES, run_harness
 from agent.policy import REFUSALS
+from agent.probes import CASES, run_probes
 
 
 def test_cases_have_unique_ids_and_known_categories():
@@ -17,7 +17,7 @@ def test_cases_have_unique_ids_and_known_categories():
         assert isinstance(message, str) and message.strip()
 
 
-def test_run_harness_aggregates_mocked_verdicts():
+def test_run_probes_aggregates_mocked_verdicts():
     fake_client = MagicMock()
     reply_fn = MagicMock(side_effect=["refuse A", "answer B"])
     cases = [
@@ -25,12 +25,12 @@ def test_run_harness_aggregates_mocked_verdicts():
         ("case_b", "on_topic", "What skills do you have?"),
     ]
 
-    with patch("agent.harness.judge_reply") as judge:
+    with patch("agent.probes.judge_reply") as judge:
         judge.side_effect = [
             {"pass": True, "reason": "refused well"},
             {"pass": False, "reason": "went off policy"},
         ]
-        rows = run_harness(cases=cases, reply_fn=reply_fn, client=fake_client)
+        rows = run_probes(cases=cases, reply_fn=reply_fn, client=fake_client)
 
     assert len(rows) == 2
     assert rows[0] == {

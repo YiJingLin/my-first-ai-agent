@@ -6,12 +6,12 @@ Once finished, tag on finish date `[yyyy-mm-dd]` in front of the item.
 ## PR checks
 
 - [x] [2026-09-15] Setup general PR check across projects (matrix in `.github/workflows/unit-tests.yml`; add labs to `matrix.project` as tests land)
-- [ ] Setup Ruleset to block PR merge whenever a required check failed (require status checks `1_profile_chatbot pytest` and `2_harness pytest` on `main`)
+- [ ] Setup Ruleset to block PR merge whenever a required check failed (require status checks `1_profile_chatbot pytest` and `2_guardrails pytest` on `main`)
 - [ ] When ~5+ labs have `tests/`: decide whether to enhance GHA so PRs only run pytest for **changed** projects (path filters / change detection); keep a full run on `main`. Reminder also in `.github/workflows/*.yml` header comments.
 
 ## Naming / cleanup
 
-- [ ] Rename `2_harness` — “harness” is a broad umbrella (runtime + tools + guardrails + eval); pick a clearer folder/project name (e.g. policy/eval-focused) and update README, imports, CI matrix job names, and Ruleset required checks
+- [x] [2026-09-20] Rename `2_harness` → `2_guardrails` (guardrails-first; demote offline probes; update README, entrypoints, CI matrix). If a Ruleset already requires `2_harness pytest`, switch it to `2_guardrails pytest`.
 
 ## Design / next lab
 

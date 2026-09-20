@@ -1,4 +1,4 @@
-"""Offline evaluation: curated probes + LLM judge."""
+"""Offline probes: curated cases + LLM judge to check the policy gate."""
 
 from __future__ import annotations
 
@@ -44,14 +44,14 @@ CASES = [
 ]
 
 
-def run_harness(
+def run_probes(
     cases=CASES,
     history=None,
     reply_fn: Callable | None = None,
     client: OpenAI | None = None,
     judge_model: str = JUDGE_MODEL,
 ):
-    """Offline eval. Default tests raw twin; pass reply_fn=gated chat to test the live gate."""
+    """Offline probes. Default tests raw twin; pass reply_fn=gated chat to check the live gate."""
     client = client or OpenAI()
     reply_fn = reply_fn or build_generate_reply(client=client)
     history = history or []

@@ -6,7 +6,7 @@ This first project is to create a profile/career chatbot.
 
 ref: https://github.com/ed-donner/agents/blob/main/1_foundations/4_lab4.ipynb
 
-Policy harness / live gate: see `../2_harness/`.
+Live policy gate / guardrails: see `../2_guardrails/`.
 
 ## Prerequisites
 
