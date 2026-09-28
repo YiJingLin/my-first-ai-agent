@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import traceback
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable
 
@@ -11,9 +12,10 @@ from agent.guardrails import assert_brief_complete
 from agent.providers import (
     DEFAULT_ORCHESTRATION,
     DEFAULT_WRITER_PROVIDER,
-    MissingGoogleApiKeyError,
+    MissingApiKeyError,
     normalize_orchestration,
     normalize_writer_provider,
+    require_openai_api_key,
     resolve_writer_model,
 )
 from agent.runtime import MODEL_NAME
@@ -103,6 +105,23 @@ def picker_prompt(brief: EmailBrief, labeled_drafts: list[tuple[str, str]]) -> s
 def _output_text(result: Any) -> str:
     output = getattr(result, "final_output", result)
     return output if isinstance(output, str) else str(output)
+
+
+def format_unexpected_error(exc: BaseException) -> str:
+    """Turn an API/runtime exception into a chat message (not Gradio's generic Error)."""
+    name = type(exc).__name__
+    message = str(exc).strip() or "(no message)"
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        nested = body.get("error", body)
+        extra = nested.get("message") if isinstance(nested, dict) else None
+        if extra and extra not in message:
+            message = f"{message}\n{extra}"
+    return (
+        "Sales Email Studio hit an unexpected error on this turn.\n\n"
+        f"{name}: {message}\n\n"
+        "Your brief is still saved. Try again, switch Settings, or check the model/API key."
+    )
 
 
 async def extract_brief(
@@ -284,6 +303,7 @@ def production_deps(
 
     provider = normalize_writer_provider(writer_provider)
     mode = normalize_orchestration(orchestration)
+    require_openai_api_key()
     studio = build_studio_agents(
         model=model,
         writer_model=resolve_writer_model(provider),
@@ -348,8 +368,11 @@ def build_chat(
                 writer_provider=writer_provider,
                 orchestration=orchestration,
             )
-        except MissingGoogleApiKeyError as exc:
+            return await handle_turn(message, history, state, turn_deps)
+        except MissingApiKeyError as exc:
             return str(exc)
-        return await handle_turn(message, history, state, turn_deps)
+        except Exception as exc:
+            traceback.print_exc()
+            return format_unexpected_error(exc)
 
     return chat

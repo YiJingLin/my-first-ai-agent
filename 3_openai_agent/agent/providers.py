@@ -13,17 +13,55 @@ DEFAULT_WRITER_PROVIDER = "openai"
 DEFAULT_ORCHESTRATION = "llm"
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-GEMINI_MODEL_NAME = "gemini-2.0-flash"
+# gemini-2.0-flash was shut down 2026-06-01. Override with GEMINI_MODEL in .env if needed.
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
 
 _gemini_model: Any | None = None
 
 
-class MissingGoogleApiKeyError(ValueError):
+class MissingApiKeyError(ValueError):
+    """Raised when a required API key is missing or whitespace-only."""
+
+
+class MissingOpenAIApiKeyError(MissingApiKeyError):
+    def __init__(self) -> None:
+        super().__init__(
+            "OPENAI_API_KEY is missing from the parent .env. "
+            "Intake, the Sales Manager, and the picker need it even when writers use Google."
+        )
+
+
+class MissingGoogleApiKeyError(MissingApiKeyError):
     def __init__(self) -> None:
         super().__init__(
             "Google writers need GOOGLE_API_KEY in the parent .env. "
             "Switch Writer provider back to OpenAI, or add the key and retry."
         )
+
+
+def require_api_key(env_name: str) -> str:
+    """Return the stripped key, or raise if unset / whitespace-only."""
+    value = (os.getenv(env_name) or "").strip()
+    if not value:
+        if env_name == "GOOGLE_API_KEY":
+            raise MissingGoogleApiKeyError()
+        if env_name == "OPENAI_API_KEY":
+            raise MissingOpenAIApiKeyError()
+        raise MissingApiKeyError(f"{env_name} is missing.")
+    return value
+
+
+def require_openai_api_key() -> str:
+    return require_api_key("OPENAI_API_KEY")
+
+
+def require_google_api_key() -> str:
+    return require_api_key("GOOGLE_API_KEY")
+
+
+def gemini_model_name() -> str:
+    configured = (os.getenv("GEMINI_MODEL") or GEMINI_MODEL_NAME).strip()
+    return configured or GEMINI_MODEL_NAME
 
 
 def normalize_writer_provider(value: str | None) -> str:
@@ -48,15 +86,14 @@ def resolve_writer_model(provider: str | None = None) -> Any:
     """OpenAI model id, or a Gemini OpenAIChatCompletionsModel for Google writers."""
     name = normalize_writer_provider(provider)
     if name == "openai":
+        require_openai_api_key()
         return MODEL_NAME
     return _google_writer_model()
 
 
 def _google_writer_model() -> Any:
     global _gemini_model
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise MissingGoogleApiKeyError()
+    api_key = require_google_api_key()
     if _gemini_model is not None:
         return _gemini_model
 
@@ -65,7 +102,7 @@ def _google_writer_model() -> Any:
 
     client = AsyncOpenAI(base_url=GEMINI_BASE_URL, api_key=api_key)
     _gemini_model = OpenAIChatCompletionsModel(
-        model=GEMINI_MODEL_NAME,
+        model=gemini_model_name(),
         openai_client=client,
     )
     return _gemini_model

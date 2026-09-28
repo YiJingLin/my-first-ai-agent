@@ -17,6 +17,7 @@ from agent.orchestrate import (
     build_chat,
     draft_and_pick,
     draft_and_pick_llm,
+    format_unexpected_error,
     handle_turn,
     picker_prompt,
     writer_prompt,
@@ -223,10 +224,18 @@ def test_chat_reports_missing_google_key(monkeypatch):
     from agent.providers import reset_writer_model_cache
 
     reset_writer_model_cache()
+    monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
     monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
     chat = build_chat(state=StudioState())
     reply = asyncio.run(chat("Help me write a sales email", [], "Google", "LLM"))
     assert "GOOGLE_API_KEY" in reply
+
+
+def test_chat_reports_missing_openai_key(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    chat = build_chat(state=StudioState())
+    reply = asyncio.run(chat("Help me write a sales email", [], "OpenAI", "LLM"))
+    assert "OPENAI_API_KEY" in reply
 
 
 def test_llm_complete_turn_returns_manager_draft():
@@ -248,3 +257,28 @@ def test_llm_complete_turn_returns_manager_draft():
 
     assert reply == "Winning email from manager"
     ask.assert_not_called()
+
+
+def test_format_unexpected_error_includes_type_and_body():
+    exc = RuntimeError("model is not found")
+    exc.body = {"error": {"message": "gemini-2.0-flash is not available"}}  # type: ignore[attr-defined]
+    text = format_unexpected_error(exc)
+    assert "RuntimeError" in text
+    assert "model is not found" in text
+    assert "gemini-2.0-flash is not available" in text
+    assert "brief is still saved" in text
+
+
+def test_chat_surfaces_unexpected_exception():
+    extract = AsyncMock(side_effect=RuntimeError("model gemini-2.0-flash is not found"))
+    deps = StudioDeps(
+        extract_brief=extract,
+        ask_for_missing=AsyncMock(),
+        draft_and_pick=AsyncMock(),
+        present_draft=AsyncMock(),
+    )
+    chat = build_chat(deps=deps, state=StudioState())
+    reply = asyncio.run(chat("Help me write a sales email", []))
+    assert "RuntimeError" in reply
+    assert "gemini-2.0-flash is not found" in reply
+    assert reply.lower() != "error"

@@ -7,8 +7,11 @@ import pytest
 from agent.providers import (
     GEMINI_MODEL_NAME,
     MissingGoogleApiKeyError,
+    MissingOpenAIApiKeyError,
     normalize_orchestration,
     normalize_writer_provider,
+    require_google_api_key,
+    require_openai_api_key,
     reset_writer_model_cache,
     resolve_writer_model,
 )
@@ -34,7 +37,20 @@ def test_unknown_settings_raise():
         normalize_orchestration("handoff")
 
 
-def test_openai_writer_model_is_default_id():
+def test_openai_writer_model_requires_api_key(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    with pytest.raises(MissingOpenAIApiKeyError, match="OPENAI_API_KEY"):
+        resolve_writer_model("openai")
+
+
+def test_openai_writer_model_rejects_whitespace_key(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "   ")
+    with pytest.raises(MissingOpenAIApiKeyError):
+        require_openai_api_key()
+
+
+def test_openai_writer_model_is_default_id(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
     assert resolve_writer_model("openai") == MODEL_NAME
 
 
@@ -45,10 +61,26 @@ def test_google_writer_model_requires_api_key(monkeypatch):
         resolve_writer_model("google")
 
 
+def test_google_writer_model_rejects_whitespace_key(monkeypatch):
+    reset_writer_model_cache()
+    monkeypatch.setenv("GOOGLE_API_KEY", " \t ")
+    with pytest.raises(MissingGoogleApiKeyError):
+        require_google_api_key()
+
+
 def test_google_writer_model_uses_gemini(monkeypatch):
     pytest.importorskip("agents")
     reset_writer_model_cache()
     monkeypatch.setenv("GOOGLE_API_KEY", "test-google-key")
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
     model = resolve_writer_model("Google")
     assert getattr(model, "model", None) == GEMINI_MODEL_NAME
     reset_writer_model_cache()
+
+
+def test_gemini_model_env_override(monkeypatch):
+    pytest.importorskip("agents")
+    from agent.providers import gemini_model_name
+
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    assert gemini_model_name() == "gemini-2.5-flash-lite"
