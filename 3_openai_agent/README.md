@@ -6,6 +6,8 @@ Practice lab for the [OpenAI Agents SDK](https://openai.github.io/openai-agents-
 - [2_lab2.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/2_lab2.ipynb) — multi-agent orchestration (code + LLM)
 - [3_lab3.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/3_lab3.ipynb) — other models, structured outputs, guardrails
 
+The Gradio product on top of those stages is **Sales Email Studio**: a Sales Manager chat that collects a brief, then drafts three styles in parallel and picks one.
+
 ## Prerequisites
 
 - Parent `.env` with `OPENAI_API_KEY`
@@ -18,11 +20,38 @@ Install the SDK as `openai-agents` — not the unrelated `agents` package on PyP
 
 ```
 3_openai_agent/
-  openai_agent.ipynb  # staged walkthrough (main lab for now)
+  openai_agent.ipynb  # staged walkthrough
+  app.py              # Gradio Sales Email Studio
+  agent/
+    brief.py          # EmailBrief + merge across turns
+    agents.py         # 6 Agent constructors
+    guardrails.py     # intake tripwire + SDK @input_guardrail
+    orchestrate.py    # turn: intake → ask or gather + pick
+    runtime.py        # load_env, MODEL
+  tests/              # brief merge + incomplete brief blocks writers
+  requirements.txt
   README.md
 ```
 
-Package modules (`agent/`), a script entrypoint, `requirements.txt`, and tests will land as stages move out of the notebook.
+## Sales Email Studio
+
+Six agents; only the Sales Manager talks to the user.
+
+1. **Intake Checker** extracts `author`, `receiver`, `field`, `purpose` into `EmailBrief`.
+2. If the brief is incomplete, the Manager asks for `missing_fields` — writers do not run.
+3. Once complete: Friendly / Professional / Creative writers run in parallel (`asyncio.gather`), then **Draft Picker** chooses the draft the Manager presents.
+
+Writers and the picker also carry an `@input_guardrail` that trips if `RunContext.brief` is incomplete.
+
+```bash
+cd 3_openai_agent
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+If Gradio fails with a NumPy/`_multiarray_umath` error, run `unset PYTHONPATH` first.
 
 ## Practice arc
 
@@ -50,7 +79,7 @@ From this folder:
 cd 3_openai_agent
 python3.13 -m venv .venv
 source .venv/bin/activate
-pip install openai-agents python-dotenv
+pip install -r requirements.txt
 # open openai_agent.ipynb and select this venv as the kernel
 ```
 
@@ -58,4 +87,12 @@ If a global Homebrew `PYTHONPATH` interferes, run `unset PYTHONPATH` first.
 
 ## Unit tests
 
-Not set up yet. When `tests/` lands, this lab can join the shared Actions matrix in `.github/workflows/unit-tests.yml`.
+```bash
+cd 3_openai_agent
+source .venv/bin/activate
+unset PYTHONPATH   # if a global PYTHONPATH interferes
+pip install -r requirements.txt
+python -m pytest tests/ -v
+```
+
+Tests mock agent runs — no `OPENAI_API_KEY` required. The suite is on the shared Actions matrix in `.github/workflows/unit-tests.yml`.

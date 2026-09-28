@@ -25,6 +25,7 @@ jobs:
         project:
           - 1_profile_chatbot
           - 2_guardrails
+          - 3_openai_agent
     defaults:
       run:
         working-directory: ${{ matrix.project }}
