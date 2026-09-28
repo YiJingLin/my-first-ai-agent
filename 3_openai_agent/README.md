@@ -6,12 +6,12 @@ Practice lab for the [OpenAI Agents SDK](https://openai.github.io/openai-agents-
 - [2_lab2.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/2_lab2.ipynb) — multi-agent orchestration (code + LLM)
 - [3_lab3.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/3_lab3.ipynb) — other models, structured outputs, guardrails
 
-The Gradio product on top of those stages is **Sales Email Studio**: a Sales Manager chat that collects a brief, then drafts three styles in parallel and picks one.
+The Gradio product on top of those stages is **Sales Email Studio**: a Sales Manager chat that collects a brief, then drafts three styles. Defaults: OpenAI writers and **LLM** orchestration (manager with writers as tools). Switch to Google writers or code (`asyncio.gather` + picker) in Settings.
 
 ## Prerequisites
 
 - Parent `.env` with `OPENAI_API_KEY`
-- Optional: `PUSHOVER_USER` / `PUSHOVER_TOKEN` for notify tools; `GOOGLE_API_KEY` for Stage 7 (Gemini)
+- Optional: `GOOGLE_API_KEY` for Google/Gemini writers in Sales Email Studio (and notebook Stage 7); `PUSHOVER_USER` / `PUSHOVER_TOKEN` for notify tools
 - Python 3.13 + venv (see below)
 
 Install the SDK as `openai-agents` — not the unrelated `agents` package on PyPI.
@@ -24,9 +24,10 @@ Install the SDK as `openai-agents` — not the unrelated `agents` package on PyP
   app.py              # Gradio Sales Email Studio
   agent/
     brief.py          # EmailBrief + merge across turns
-    agents.py         # 6 Agent constructors
+    agents.py         # 6 Agent constructors + LLM manager (writers as tools)
+    providers.py      # OpenAI vs Google writer models; llm vs code
     guardrails.py     # intake tripwire + SDK @input_guardrail
-    orchestrate.py    # turn: intake → ask or gather + pick
+    orchestrate.py    # turn: intake → ask or draft (LLM or code)
     runtime.py        # load_env, MODEL
   tests/              # brief merge + incomplete brief blocks writers
   requirements.txt
@@ -39,9 +40,39 @@ Six agents; only the Sales Manager talks to the user.
 
 1. **Intake Checker** extracts `author`, `receiver`, `field`, `purpose` into `EmailBrief`.
 2. If the brief is incomplete, the Manager asks for `missing_fields` — writers do not run.
-3. Once complete: Friendly / Professional / Creative writers run in parallel (`asyncio.gather`), then **Draft Picker** chooses the draft the Manager presents.
+3. Once complete, drafting depends on **Orchestration** (Settings):
+   - **LLM (default):** Sales Manager calls the three writers as tools and presents the winner.
+   - **Code:** Friendly / Professional / Creative run in parallel (`asyncio.gather`), then **Draft Picker** chooses; the chat Manager presents it.
+4. **Writer provider** (Settings): OpenAI (default) or Google (Gemini via `GOOGLE_API_KEY`). Only the three writers switch; intake, manager, and picker stay on OpenAI.
 
-Writers and the picker also carry an `@input_guardrail` that trips if `RunContext.brief` is incomplete.
+Writers, the picker, and the LLM manager also carry an `@input_guardrail` that trips if `RunContext.brief` is incomplete.
+
+### Flow (`app.py`)
+
+```mermaid
+flowchart TD
+  appEntry["app.py: load_env then Gradio ChatInterface"] --> userMsg[User message]
+  userMsg --> settings["Settings: writer provider and orchestration"]
+  settings --> intake[Intake Checker output_type EmailBrief]
+  intake --> complete{brief.is_complete}
+
+  complete -->|no| ask[Sales Manager asks missing_fields]
+  complete -->|yes| mode{orchestration}
+
+  mode -->|"LLM default"| llmMgr["LLM Sales Manager: writers as tools"]
+  mode -->|Code| gather["asyncio.gather: Friendly Professional Creative"]
+  gather --> picker[Draft Picker]
+  picker --> present[Sales Manager presents winner]
+
+  writers["Writers: OpenAI or Google"] --> llmMgr
+  writers --> gather
+
+  ask --> chat[Return reply to Gradio]
+  llmMgr --> chat
+  present --> chat
+```
+
+Intake, the chat-facing Sales Manager, and the Draft Picker stay on OpenAI. Only the three writers switch when Writer provider is Google.
 
 ```bash
 cd 3_openai_agent
@@ -95,4 +126,4 @@ pip install -r requirements.txt
 python -m pytest tests/ -v
 ```
 
-Tests mock agent runs — no `OPENAI_API_KEY` required. The suite is on the shared Actions matrix in `.github/workflows/unit-tests.yml`.
+Tests mock agent runs — no `OPENAI_API_KEY` required. The same suite runs on PRs via GitHub Actions (`unit-tests.yml` matrix includes `3_openai_agent`).
