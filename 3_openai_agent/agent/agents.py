@@ -51,6 +51,14 @@ Evaluate persuasiveness, clarity, professionalism, and fit for the brief.
 Return the best draft, with a brief explanation of your choice.
 """.strip()
 
+LLM_MANAGER_INSTRUCTIONS = """
+You are a sales manager. You have three writer tools with different styles:
+friendly_writer, professional_writer, and creative_writer.
+Call all three writers to get drafts, pick the best one for the brief, and present that email.
+Keep the chosen email intact. One sentence on which style won is fine.
+Use the real names from the brief. Do not invent missing details.
+""".strip()
+
 
 @dataclass(frozen=True)
 class StudioAgents:
@@ -66,8 +74,12 @@ class StudioAgents:
         return (self.friendly, self.professional, self.creative)
 
 
-def build_studio_agents(model: str = MODEL_NAME) -> StudioAgents:
+def build_studio_agents(
+    model: str = MODEL_NAME,
+    writer_model: object | None = None,
+) -> StudioAgents:
     intake_guardrail = get_intake_guardrail()
+    writers_model = writer_model if writer_model is not None else model
     return StudioAgents(
         manager=Agent(
             name="Sales Manager",
@@ -83,19 +95,19 @@ def build_studio_agents(model: str = MODEL_NAME) -> StudioAgents:
         friendly=Agent(
             name="Friendly Writer",
             instructions=FRIENDLY_INSTRUCTIONS,
-            model=model,
+            model=writers_model,
             input_guardrails=[intake_guardrail],
         ),
         professional=Agent(
             name="Professional Writer",
             instructions=PROFESSIONAL_INSTRUCTIONS,
-            model=model,
+            model=writers_model,
             input_guardrails=[intake_guardrail],
         ),
         creative=Agent(
             name="Creative Writer",
             instructions=CREATIVE_INSTRUCTIONS,
-            model=model,
+            model=writers_model,
             input_guardrails=[intake_guardrail],
         ),
         picker=Agent(
@@ -104,4 +116,33 @@ def build_studio_agents(model: str = MODEL_NAME) -> StudioAgents:
             model=model,
             input_guardrails=[intake_guardrail],
         ),
+    )
+
+
+def build_llm_manager(
+    writers: tuple[Agent, Agent, Agent],
+    model: str = MODEL_NAME,
+) -> Agent:
+    """Sales Manager that calls the three writers as tools (Stage 6a)."""
+    intake_guardrail = get_intake_guardrail()
+    tools = [
+        writers[0].as_tool(
+            tool_name="friendly_writer",
+            tool_description="Warm, conversational sales email writer",
+        ),
+        writers[1].as_tool(
+            tool_name="professional_writer",
+            tool_description="Concise, formal sales email writer",
+        ),
+        writers[2].as_tool(
+            tool_name="creative_writer",
+            tool_description="Playful, memorable sales email writer",
+        ),
+    ]
+    return Agent(
+        name="LLM Sales Manager",
+        instructions=LLM_MANAGER_INSTRUCTIONS,
+        model=model,
+        tools=tools,
+        input_guardrails=[intake_guardrail],
     )

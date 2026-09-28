@@ -8,6 +8,14 @@ from typing import Any, Awaitable, Callable
 
 from agent.brief import EmailBrief, merge_briefs, with_status
 from agent.guardrails import assert_brief_complete
+from agent.providers import (
+    DEFAULT_ORCHESTRATION,
+    DEFAULT_WRITER_PROVIDER,
+    MissingGoogleApiKeyError,
+    normalize_orchestration,
+    normalize_writer_provider,
+    resolve_writer_model,
+)
 from agent.runtime import MODEL_NAME
 
 ExtractBrief = Callable[[str, list, EmailBrief], Awaitable[EmailBrief]]
@@ -140,7 +148,7 @@ async def ask_for_missing(
     return _output_text(result)
 
 
-async def draft_and_pick(
+async def draft_and_pick_code(
     message: str,
     brief: EmailBrief,
     *,
@@ -161,7 +169,7 @@ async def draft_and_pick(
         try:
             from agents import trace
 
-            span = trace("sales-studio-draft")
+            span = trace("sales-studio-draft-code")
         except ImportError:
             span = nullcontext()
     context = StudioContext(brief=complete)
@@ -178,6 +186,49 @@ async def draft_and_pick(
         picked = await runner(picker, picker_prompt(complete, labeled), context=context)
 
     return _output_text(picked), writer_names
+
+
+draft_and_pick = draft_and_pick_code
+
+
+def llm_manager_prompt(brief: EmailBrief, user_message: str) -> str:
+    return (
+        writer_prompt(brief, user_message)
+        + "\nCall all three writer tools, pick the best draft, and present it to the user."
+    )
+
+
+async def draft_and_pick_llm(
+    message: str,
+    brief: EmailBrief,
+    *,
+    manager: Any,
+    runner: Any | None = None,
+    span: Any | None = None,
+) -> tuple[str, list[str]]:
+    """LLM orchestration: manager calls writers as tools. Raises if gated."""
+    from contextlib import nullcontext
+
+    complete = assert_brief_complete(brief)
+    if runner is None:
+        from agents import Runner
+
+        runner = Runner.run
+    if span is None:
+        try:
+            from agents import trace
+
+            span = trace("sales-studio-draft-llm")
+        except ImportError:
+            span = nullcontext()
+    context = StudioContext(brief=complete)
+    with span:
+        result = await runner(manager, llm_manager_prompt(complete, message), context=context)
+    return _output_text(result), [
+        "Friendly Writer",
+        "Professional Writer",
+        "Creative Writer",
+    ]
 
 
 async def present_draft(
@@ -223,10 +274,20 @@ async def handle_turn(
     return await deps.present_draft(winning, considered, state.brief)
 
 
-def production_deps(model: str = MODEL_NAME, state: StudioState | None = None) -> StudioDeps:
-    from agent.agents import build_studio_agents
+def production_deps(
+    model: str = MODEL_NAME,
+    state: StudioState | None = None,
+    writer_provider: str = DEFAULT_WRITER_PROVIDER,
+    orchestration: str = DEFAULT_ORCHESTRATION,
+) -> StudioDeps:
+    from agent.agents import build_llm_manager, build_studio_agents
 
-    studio = build_studio_agents(model=model)
+    provider = normalize_writer_provider(writer_provider)
+    mode = normalize_orchestration(orchestration)
+    studio = build_studio_agents(
+        model=model,
+        writer_model=resolve_writer_model(provider),
+    )
     session = state.session if state is not None else None
 
     async def _extract(message: str, history: list, stored: EmailBrief) -> EmailBrief:
@@ -237,15 +298,25 @@ def production_deps(model: str = MODEL_NAME, state: StudioState | None = None) -
             message, history, brief, agent=studio.manager, session=session
         )
 
-    async def _draft(message: str, brief: EmailBrief) -> tuple[str, list[str]]:
-        return await draft_and_pick(
-            message, brief, writers=studio.writers, picker=studio.picker
-        )
+    if mode == "code":
 
-    async def _present(winning: str, considered: list[str], brief: EmailBrief) -> str:
-        return await present_draft(
-            winning, considered, brief, agent=studio.manager, session=session
-        )
+        async def _draft(message: str, brief: EmailBrief) -> tuple[str, list[str]]:
+            return await draft_and_pick_code(
+                message, brief, writers=studio.writers, picker=studio.picker
+            )
+
+        async def _present(winning: str, considered: list[str], brief: EmailBrief) -> str:
+            return await present_draft(
+                winning, considered, brief, agent=studio.manager, session=session
+            )
+    else:
+        llm_manager = build_llm_manager(studio.writers, model=model)
+
+        async def _draft(message: str, brief: EmailBrief) -> tuple[str, list[str]]:
+            return await draft_and_pick_llm(message, brief, manager=llm_manager)
+
+        async def _present(winning: str, considered: list[str], brief: EmailBrief) -> str:
+            return winning
 
     return StudioDeps(
         extract_brief=_extract,
@@ -260,11 +331,25 @@ def build_chat(
     state: StudioState | None = None,
     model: str = MODEL_NAME,
 ):
-    """Gradio ChatInterface callback (async)."""
+    """Gradio ChatInterface callback (async). Accepts provider and orchestration radios."""
     state = state or StudioState()
-    deps = deps or production_deps(model=model, state=state)
+    injected = deps
 
-    async def chat(message, history):
-        return await handle_turn(message, history, state, deps)
+    async def chat(
+        message,
+        history,
+        writer_provider: str = "OpenAI",
+        orchestration: str = "LLM",
+    ):
+        try:
+            turn_deps = injected or production_deps(
+                model=model,
+                state=state,
+                writer_provider=writer_provider,
+                orchestration=orchestration,
+            )
+        except MissingGoogleApiKeyError as exc:
+            return str(exc)
+        return await handle_turn(message, history, state, turn_deps)
 
     return chat

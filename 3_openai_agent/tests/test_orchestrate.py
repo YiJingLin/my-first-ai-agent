@@ -14,7 +14,9 @@ from contextlib import nullcontext
 from agent.orchestrate import (
     StudioDeps,
     StudioState,
+    build_chat,
     draft_and_pick,
+    draft_and_pick_llm,
     handle_turn,
     picker_prompt,
     writer_prompt,
@@ -178,3 +180,71 @@ def test_writer_and_picker_prompt_include_brief():
     assert "book a demo" in pp
     assert "Friendly Writer" in pp
     assert "hello" in pp
+
+
+def test_llm_draft_raises_before_runner_when_incomplete():
+    runner = AsyncMock()
+    with pytest.raises(IncompleteBriefError):
+        asyncio.run(
+            draft_and_pick_llm(
+                "write it",
+                EmailBrief(author="Jordan"),
+                manager=MagicMock(),
+                runner=runner,
+            )
+        )
+    runner.assert_not_called()
+
+
+def test_llm_draft_runs_manager_once():
+    runner = AsyncMock(return_value=MagicMock(final_output="manager picked this"))
+    manager = MagicMock()
+    manager.name = "LLM Sales Manager"
+
+    winning, considered = asyncio.run(
+        draft_and_pick_llm(
+            "make it short",
+            _complete_brief(),
+            manager=manager,
+            runner=runner,
+            span=nullcontext(),
+        )
+    )
+
+    assert winning == "manager picked this"
+    assert considered == ["Friendly Writer", "Professional Writer", "Creative Writer"]
+    runner.assert_awaited_once()
+    prompt = runner.await_args.args[1]
+    assert "three writer" in prompt
+    assert "Jordan" in prompt and "Priya" in prompt
+
+
+def test_chat_reports_missing_google_key(monkeypatch):
+    from agent.providers import reset_writer_model_cache
+
+    reset_writer_model_cache()
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    chat = build_chat(state=StudioState())
+    reply = asyncio.run(chat("Help me write a sales email", [], "Google", "LLM"))
+    assert "GOOGLE_API_KEY" in reply
+
+
+def test_llm_complete_turn_returns_manager_draft():
+    extract = AsyncMock(return_value=_complete_brief())
+    ask = AsyncMock()
+    draft = AsyncMock(return_value=("Winning email from manager", ["Friendly Writer"]))
+
+    async def identity_present(winning, considered, brief):
+        return winning
+
+    deps = StudioDeps(
+        extract_brief=extract,
+        ask_for_missing=ask,
+        draft_and_pick=draft,
+        present_draft=identity_present,
+    )
+
+    reply = asyncio.run(handle_turn("draft it", [], StudioState(), deps))
+
+    assert reply == "Winning email from manager"
+    ask.assert_not_called()
