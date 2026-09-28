@@ -66,6 +66,9 @@ Delivery (email/SMTP) is optional. Prefer Pushover or a dry-run print tool so th
 
 ## Sales Email Studio
 
+<img width="1310" height="818" alt="Screenshot 2026-09-28 at 3 58 21 PM" src="https://github.com/user-attachments/assets/93bcde55-3e9d-4f77-b1cd-dbd713c066c9" />
+
+
 Python Gradio app on top of the notebook stages. A Sales Manager chat collects a brief, then drafts three styles. Defaults: OpenAI writers and **LLM** orchestration (manager with writers as tools). Switch to Google writers or code (`asyncio.gather` + picker) in Settings.
 
 Six agents; only the Sales Manager talks to the user.
