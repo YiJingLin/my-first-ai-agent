@@ -13,8 +13,12 @@ DEFAULT_WRITER_PROVIDER = "openai"
 DEFAULT_ORCHESTRATION = "llm"
 
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-# gemini-2.0-flash was shut down 2026-06-01. Override with GEMINI_MODEL in .env if needed.
-GEMINI_MODEL_NAME = "gemini-2.5-flash"
+# Default Google writer model. Change here (or set GEMINI_MODEL in parent .env).
+# gemini-2.0-flash: shut down 2026-06-01.
+# gemini-2.5-flash / gemini-2.5-flash-lite: often blocked for *new* API users
+# ("no longer available to new users"). Prefer 3.x for new keys:
+#   gemini-3.8-flash (docs default) or gemini-3.5-flash-lite (cheaper).
+GEMINI_MODEL_NAME = "gemini-3.8-flash"
 
 _gemini_model: Any | None = None
 

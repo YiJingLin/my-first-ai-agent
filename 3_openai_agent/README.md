@@ -75,7 +75,7 @@ Six agents; only the Sales Manager talks to the user.
 3. Once complete, drafting depends on **Orchestration** (Settings):
    - **LLM (default):** Sales Manager calls the three writers as tools and presents the winner.
    - **Code:** Friendly / Professional / Creative run in parallel (`asyncio.gather`), then **Draft Picker** chooses; the chat Manager presents it.
-4. **Writer provider** (Settings): OpenAI (default) or Google (`gemini-2.5-flash` via `GOOGLE_API_KEY`; override with `GEMINI_MODEL` in `.env`). Only the three writers switch; intake, manager, and picker stay on OpenAI.
+4. **Writer provider** (Settings): OpenAI (default) or Google (`gemini-3.8-flash` via `GOOGLE_API_KEY`; override with `GEMINI_MODEL` in `.env`, or change `GEMINI_MODEL_NAME` in [`agent/providers.py`](agent/providers.py)). Only the three writers switch; intake, manager, and picker stay on OpenAI.
 
 Writers, the picker, and the LLM manager also carry an `@input_guardrail` that trips if `RunContext.brief` is incomplete.
 
@@ -117,6 +117,22 @@ python app.py
 ```
 
 If Gradio fails with a NumPy/`_multiarray_umath` error, run `unset PYTHONPATH` first.
+
+### Troubleshooting
+
+Unexpected exceptions are returned in the chat (type + message), not as Gradio’s generic “Error”. The stored brief is kept.
+
+**1. LLM orchestration: `MaxTurnsExceeded: Max turns (10) exceeded`**
+
+The LLM Sales Manager calls writers as tools. `Runner.run` loops until the manager answers in prose (no more tool calls), or hits 10 turns. A failed writer tool (wrong Gemini id, 404, empty output) is sent **back to the manager**, which often **calls the same tools again**. That looks like “max retries” and can hide the real writer error.
+
+Switch Settings → Orchestration **Code** and send the same request. Code runs each writer once (no manager tool loop), so the chat should show the underlying API error.
+
+**2. Google: model no longer available**
+
+Example: `This model models/gemini-2.5-flash-lite is no longer available to new users` (Gemini 2.5 is often limited to prior users). `gemini-2.0-flash` is shut down.
+
+Update the Google writer id in [`agent/providers.py`](agent/providers.py) (`GEMINI_MODEL_NAME`), or set `GEMINI_MODEL` in the parent `.env` without a code change. Current default is `gemini-3.8-flash`. Alternatives: `gemini-3.5-flash-lite`, `gemini-3.5-flash`. Restart `python app.py` after changing the default (the Gemini client is cached in-process).
 
 ## Unit tests
 
