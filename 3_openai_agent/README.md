@@ -5,6 +5,7 @@ Practice lab for the [OpenAI Agents SDK](https://openai.github.io/openai-agents-
 - [1_lab1.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/1_lab1.ipynb) — Agent, Runner, traces, tools, sessions
 - [2_lab2.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/2_lab2.ipynb) — multi-agent orchestration (code + LLM)
 - [3_lab3.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/3_lab3.ipynb) — other models, structured outputs, guardrails
+- [4_lab4.ipynb](https://github.com/ed-donner/agents/blob/main/2_openai/4_lab4.ipynb) — Deep Research (notebook Stage 10 only; not in Sales Email Studio yet)
 
 ## Prerequisites
 
@@ -61,8 +62,11 @@ Work the stages in `openai_agent.ipynb` in order:
 | 7 | Other providers / models | Non-OpenAI model (e.g. Gemini) via OpenAI-compatible client |
 | 8 | Structured outputs | `final_output` is a Pydantic object |
 | 9 | Guardrails | DIY checker and/or SDK `@output_guardrail` |
+| 10 | Deep Research pipeline | Plan → parallel `WebSearchTool` → report → notify |
 
 Delivery (email/SMTP) is optional. Prefer Pushover or a dry-run print tool so the focus stays on agents. Sandbox agents and MCP stay stretch-only in the notebook.
+
+**WARNING — Stage 10 costs money:** it uses OpenAI's hosted `WebSearchTool` (~$0.01+/call; OpenAI may bill multiple searches per call). See the [API pricing (Tools)](https://developers.openai.com/api/docs/pricing) page before running those notebook cells. Skipping the Stage 10 run cells is fine if you only want to read the pattern.
 
 ## Sales Email Studio
 
