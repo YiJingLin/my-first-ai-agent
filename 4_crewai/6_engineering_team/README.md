@@ -13,7 +13,7 @@ Compared with `5_coder`:
 - Engineering lead `llm` is `openai/gpt-5.5`. The other agents stay on `openai/gpt-5.4-mini`
 - Requirements string in `main.py` is a trading-account simulator (deposit, withdraw, buy, sell, holdings, P&L)
 
-Reference: `agents/3_crewai/reference/engineering_team`
+Reference: https://github.com/ed-donner/agents/tree/main/3_crewai/reference/engineering_team
 
 ## Create
 

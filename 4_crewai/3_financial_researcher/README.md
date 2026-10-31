@@ -10,7 +10,7 @@ Compared with `2_researcher`:
 - `output_file: output/report.md` on the analysis task in `tasks.yaml` (the reference also sets it again in `crew.py`)
 - `input()` for the company name, plus `current_date` in `kickoff` inputs
 
-Reference: `agents/3_crewai/reference/financial_researcher`
+Reference: https://github.com/ed-donner/agents/tree/main/3_crewai/reference/financial_researcher
 
 ## Create
 

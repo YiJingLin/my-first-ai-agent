@@ -12,7 +12,7 @@ Baseline crew. Later labs add to this.
 - `output_file` on each task in `tasks.yaml` (`output/propose.md`, `output/oppose.md`, `output/decide.md`)
 - `verbose=True` and `tracing=True` on the crew
 
-Reference: `agents/3_crewai/reference/debate`
+Reference: https://github.com/ed-donner/agents/tree/main/3_crewai/reference/debate
 
 ## Create
 

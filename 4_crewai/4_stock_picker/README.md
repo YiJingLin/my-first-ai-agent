@@ -11,7 +11,7 @@ Compared with `3_financial_researcher`:
 - `SerperDevTool` stays on the finder and researcher
 - Inputs are fixed in `main.py` (`sector=Technology`, `current_date`), not `input()`
 
-Reference: `agents/3_crewai/reference/stock_picker`
+Reference: https://github.com/ed-donner/agents/tree/main/3_crewai/reference/stock_picker
 
 ## Create
 

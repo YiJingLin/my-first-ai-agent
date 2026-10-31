@@ -1,6 +1,6 @@
 # CrewAI
 
-Walk the course reference crews in `agents/3_crewai/reference/` one folder at a time. Build each one inside the numbered lab below, and copy that lab's prompts from the matching reference when you wire agents and tasks.
+Walk the course reference crews in [ed-donner/agents `3_crewai/reference`](https://github.com/ed-donner/agents/tree/main/3_crewai/reference) one folder at a time. Build each one inside the numbered lab below, and copy that lab's prompts from the matching reference when you wire agents and tasks.
 
 The numbered folder is the lab. The CrewAI package is created inside it (`debate`, `researcher`, …) because a Python module name cannot start with a digit.
 

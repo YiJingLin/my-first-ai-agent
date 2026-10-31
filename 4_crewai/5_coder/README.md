@@ -11,7 +11,7 @@ Compared with `4_stock_picker`:
 - `cache_function` on those tools returns `False` so CrewAI does not cache sandbox results
 - `{assignment}` comes from a string in `main.py`. The reference assignment sums the Leibniz series (1,000,000 terms) and multiplies by 4
 
-Reference: `agents/3_crewai/reference/coder`
+Reference: https://github.com/ed-donner/agents/tree/main/3_crewai/reference/coder
 
 ## Create
 

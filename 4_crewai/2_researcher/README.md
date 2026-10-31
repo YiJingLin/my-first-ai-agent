@@ -9,7 +9,7 @@ Compared with `1_debate`:
 - `kickoff` inputs are `topic` and `current_year` (no `input()` prompt)
 - The second task receives the first task's output because the crew is sequential. There is still no `context:` list
 
-Reference: `agents/3_crewai/reference/researcher`
+Reference: https://github.com/ed-donner/agents/tree/main/3_crewai/reference/researcher
 
 ## Create
 
