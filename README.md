@@ -7,3 +7,4 @@ This is the practice on AI agents course from Udemy
 - `1_profile_chatbot/` — OpenAI + tools + Gradio profile/career twin
 - `2_guardrails/` — live policy gate (guardrails) on top of lab 1’s career twin
 - `3_openai_agent/` — OpenAI Agents SDK walkthrough + Gradio Sales Email Studio (intake gate; LLM or code orchestration; OpenAI or Google writers)
+- `4_crewai/` — CrewAI labs, one reference crew at a time (debate through engineering team)
